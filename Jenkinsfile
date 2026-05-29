@@ -143,15 +143,17 @@ pipeline {
     }
 
     post {
-        success {
-            echo '✅ PIPELINE COMPLETADO CON ÉXITO'
-            archiveArtifacts artifacts: 'reports/**/*', fingerprint: true
-        }
-        failure {
-            echo '❌ PIPELINE FALLIDO — revisa los reportes'
-        }
-        always {
-            cleanWs()
-        }
+    success {
+        // 1. Primero guardamos los reportes
+        archiveArtifacts artifacts: 'reports/**/*', fingerprint: true
+        echo '✅ PIPELINE COMPLETADO CON ÉXITO'
     }
+    always {
+        // 2. Al final de todo, limpiamos el espacio
+        cleanWs()
+    }
+    failure {
+        echo '❌ PIPELINE FALLIDO — revisa los reportes'
+    }
+}
 }

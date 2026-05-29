@@ -134,26 +134,30 @@ pipeline {
             steps {
                 sh '''
                     . venv/bin/activate
-                    VERSION=$(python -c "from restaurante import version; print(version())")
-                    echo "Versión desplegada: $VERSION" > dist/version.txt
+                    VERSION=\$(python -c "from restaurante import version; print(version())")
+                    echo "Versión desplegada: \$VERSION" > dist/version.txt
                 '''
                 archiveArtifacts artifacts: 'dist/version.txt', fingerprint: true
             }
         }
     }
 
+    // ───────────────── POST ACCIONES GLOBALES ─────────────────
     post {
-    success {
-        // 1. Primero guardamos los reportes
-        archiveArtifacts artifacts: 'reports/**/*', fingerprint: true
-        echo '✅ PIPELINE COMPLETADO CON ÉXITO'
+        always {
+            // Evaluamos si el resultado del pipeline fue exitoso para archivar los reportes antes de limpiar
+            script {
+                if (currentBuild.currentResult == 'SUCCESS') {
+                    echo '📦 Guardando artefactos generados...'
+                    archiveArtifacts artifacts: 'reports/**/*', fingerprint: true
+                    echo '✅ PIPELINE COMPLETADO CON ÉXITO'
+                } else {
+                    echo '❌ PIPELINE FALLIDO — revisa los reportes de consola'
+                }
+            }
+            // La limpieza se ejecuta estrictamente al final de todo el flujo
+            echo '🧹 Limpiando el espacio de trabajo...'
+            cleanWs()
+        }
     }
-    always {
-        // 2. Al final de todo, limpiamos el espacio
-        cleanWs()
-    }
-    failure {
-        echo '❌ PIPELINE FALLIDO — revisa los reportes'
-    }
-}
 }
